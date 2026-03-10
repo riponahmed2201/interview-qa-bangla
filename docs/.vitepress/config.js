@@ -2,13 +2,15 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Interview Question বাংলা',
-  description: 'টেক ইন্টারভিউ প্রশ্ন ও উত্তর (বাংলা) — Node.js, React, JavaScript ও অন্যান্য',
+  description: 'টেক ইন্টারভিউ প্রশ্ন ও উত্তর (বাংলা) — Node.js, NestJS, JavaScript, TypeScript ও অন্যান্য',
   base: '/interview-qa-bangla/',  // GitHub Pages: username.github.io/interview-qa-bangla/
   themeConfig: {
     nav: [
       { text: 'হোম', link: '/' },
       { text: 'Node.js', link: '/nodejs' },
-      // পরবর্তীতে: { text: 'React', link: '/react' }, { text: 'JavaScript', link: '/javascript' },
+      { text: 'NestJS', link: '/nestjs' },
+      { text: 'JavaScript', link: '/javascript' },
+      { text: 'TypeScript', link: '/typescript' },
     ],
     sidebar: [
       {
@@ -17,7 +19,24 @@ export default defineConfig({
           { text: 'প্রশ্ন ও উত্তর', link: '/nodejs' },
         ],
       },
-      // আরও টপিক যোগ করলে এখানে সেকশন যুক্ত করো (React, JavaScript, SQL ইত্যাদি)
+      {
+        text: 'NestJS',
+        items: [
+          { text: 'প্রশ্ন ও উত্তর', link: '/nestjs' },
+        ],
+      },
+      {
+        text: 'JavaScript',
+        items: [
+          { text: 'প্রশ্ন ও উত্তর', link: '/javascript' },
+        ],
+      },
+      {
+        text: 'TypeScript',
+        items: [
+          { text: 'প্রশ্ন ও উত্তর', link: '/typescript' },
+        ],
+      },
     ],
     socialLinks: [
       // { icon: 'github', link: 'https://github.com/...' },

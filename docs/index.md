@@ -1,15 +1,15 @@
 # Interview Question বাংলা
 
-টেক ইন্টারভিউয়ের জন্য প্রশ্ন ও উত্তর — বাংলায়। Node.js ছাড়াও React, JavaScript, SQL ইত্যাদি টপিক যুক্ত করা হবে।
+টেক ইন্টারভিউয়ের জন্য প্রশ্ন ও উত্তর — বাংলায়। Node.js, NestJS, JavaScript, TypeScript ও ভবিষ্যতে আরও টপিক।
 
 ## টপিক
 
 | টপিক | লিংক | প্রশ্ন সংখ্যা |
 |------|------|----------------|
 | **Node.js** | [প্রশ্ন ও উত্তর](/nodejs) | ১৫০+ |
-| React | *(আসছে)* | — |
-| JavaScript | *(আসছে)* | — |
-| SQL / অন্যান্য | *(আসছে)* | — |
+| **NestJS** | [প্রশ্ন ও উত্তর](/nestjs) | *(আসছে)* |
+| **JavaScript** | [প্রশ্ন ও উত্তর](/javascript) | *(আসছে)* |
+| **TypeScript** | [প্রশ্ন ও উত্তর](/typescript) | *(আসছে)* |
 
 ## Node.js এ যা কভার
 
@@ -17,4 +17,4 @@ Event Loop, V8, Libuv, Callback, Promise, async/await, Express, Middleware, CORS
 
 ---
 
-*ইন্টারভিউ প্রস্তুতির জন্য রিভিশন করুন। নতুন টপিক যোগ করা চলছে।*
+*ইন্টারভিউ প্রস্তুতির জন্য রিভিশন করুন। NestJS, JavaScript, TypeScript এর কনটেন্ট শীঘ্রই যুক্ত করা হবে।*
