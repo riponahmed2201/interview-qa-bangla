@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Interview Question বাংলা',
   description: 'টেক ইন্টারভিউ প্রশ্ন ও উত্তর (বাংলা) — Node.js, React, JavaScript ও অন্যান্য',
-  base: '/',
+  base: '/interview-qa-bangla/',  // GitHub Pages: username.github.io/interview-qa-bangla/
   themeConfig: {
     nav: [
       { text: 'হোম', link: '/' },
