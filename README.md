@@ -58,11 +58,17 @@ git push -u origin main
 
 `YOUR_USERNAME` এর জায়গায় তোমার GitHub ইউজারনেম দেবে।
 
-### ৩. GitHub Pages চালু করা
+### ৩. GitHub Pages চালু করা (এটা অবশ্যই করতে হবে)
 
-1. রিপোতে **Settings** → বাম পাশে **Pages**।
-2. **Source:** "GitHub Actions" সিলেক্ট করো।
-3. কিছু করো না — এই রিপোতে `.github/workflows/deploy.yml` আছে; push করার পর অটো বিল্ড ও ডিপ্লয় হবে।
+**প্রথমে Pages সোর্স সেট না করলে workflow এ "Get Pages site failed" এরর আসবে।**
+
+1. রিপোতে যাও → **Settings** (রিপোর উপরের ট্যাব)।
+2. বাম সাইডবার থেকে **Pages** ক্লিক করো।
+3. **Build and deployment** এর নিচে **Source** ড্রপডাউন খোলো।
+4. **GitHub Actions** সিলেক্ট করো (Deploy from a branch না)।
+5. সেভ করার জন্য আলাদা বাটন নাও — সিলেক্ট করলেই সেভ হয়।
+
+এরপর **Actions** ট্যাবে গিয়ে যে workflow ফেইল হয়েছিল সেটা আবার **Re-run** করো, অথবা নতুন একটা push করো। এবার বিল্ড ও ডিপ্লয় হওয়া উচিত।
 
 ### ৪. সাইট দেখা
 
