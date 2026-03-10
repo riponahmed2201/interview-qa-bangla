@@ -1107,4 +1107,18 @@ Promise.resolve(1)
 
 ---
 
-*সব উত্তর সংক্ষেপে ও ইন্টারভিউ বলার জন্য রাখা। সূত্র: GeeksforGeeks, roadmap.sh, RisingStack, Medium, Interview Coder, [C# Corner – Node.js Interview Questions](https://www.c-sharpcorner.com/article/node-js-interview-questions-and-answers/)।*
+---
+
+## TatvaSoft থেকে (অতিরিক্ত)
+
+### ১৪৯. কোন ধরনের অ্যাপ Node.js দিয়ে বানানো হয়?
+**উত্তর:** (১) **Single-Page Applications (SPA)** — হেভি I/O, অ্যাসিঙ্ক কল; সার্ভার ও ভিউ এর মধ্যে ডাটা স্মুথ। (২) **রিয়েল-টাইম কলাবোরেশন টুল** — ডকুমেন্ট এডিটিং, ভিডিও/অডিও কনফারেন্সিং। (৩) **লোকেশন-বেসড অ্যাপ** — অ্যাসিঙ্ক ও ইভেন্ট-চালিত আর্কিটেকচার। (৪) **রিয়েল-টাইম অ্যাপ** — ইনস্ট্যান্ট মেসেজিং, চ্যাট, IRC। (৫) **স্ট্রিমিং অ্যাপ** — Stream API দিয়ে রিয়েল-টাইম ডাটা ও ক্লায়েন্ট-সার্ভার সিঙ্ক। এগুলো ছাড়াও REST API, মাইক্রোসার্ভিস, CLI টুল।
+
+---
+
+### ১৫০. Asynchronous আর Non-Blocking আলাদা কিভাবে?
+**উত্তর:** **Non-blocking:** ডাটা থাকলে সঙ্গে সঙ্গে রেসপন্স, না থাকলে এরর; কোনো এক্সিকিউশন আটকে রাখে না। **Asynchronous:** সঙ্গে সঙ্গে রেসপন্স দেয় না; অপারেশন চালু রেখে অন্য কাজ করে, শেষে callback/প্রমিস দিয়ে রেজাল্ট দেয়। Non-blocking সাধারণত I/O এর জন্য; Asynchronous অনেক ধরনের টাস্কে (টাইমার, নেটওয়ার্ক, ফাইল)। দুটোই “ব্লক না করা” নিয়ে কিন্তু Non-blocking = তাৎক্ষণিক উত্তর বা এরর, Async = অপেক্ষা করার সময় অন্য কাজ চালানো।
+
+---
+
+*সব উত্তর সংক্ষেপে ও ইন্টারভিউ বলার জন্য রাখা। সূত্র: GeeksforGeeks, roadmap.sh, RisingStack, Medium, Interview Coder, C# Corner, [TatvaSoft – Node.js Interview Questions](https://www.tatvasoft.com/outsourcing/2022/02/node-js-interview-questions.html)।*
