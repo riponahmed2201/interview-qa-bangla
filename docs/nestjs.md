@@ -120,7 +120,7 @@ import { Injectable, NestMiddleware } from "@nestjs/common";
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-  use(req: any, res: any, next: () => void) {
+  use(req: unknown, res: unknown, next: () => void) {
     console.log(req.method, req.url);
     next();
   }
@@ -131,7 +131,8 @@ export class LoggerMiddleware implements NestMiddleware {
 
 ## ৬) Custom decorator বানিয়ে method নাম/args লগ (আইডিয়া)
 
-**উত্তর:** NestJS এ custom decorator দিয়ে extra metadata/behavior যোগ করা যায়। ইন্টারভিউতে মূল কথা: **decorator = reusable cross-cutting logic**।
+**উত্তর:** NestJS এ custom decorator দিয়ে request থেকে common data extract করা (যেমন current user, request id) বা metadata attach করা যায়।  
+Cross-cutting behavior (logging) সাধারণত Interceptor-এ বেশি clean থাকে—কিন্তু ইন্টারভিউতে decorator ধারণাটা বুঝলেই হয়।
 
 _(নোট: production-এ সাধারণত Interceptor/Logger ব্যবহার করা হয়।)_
 
@@ -142,7 +143,7 @@ import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 
 export const LogMethod = createParamDecorator(
   (_: unknown, ctx: ExecutionContext) => {
-    const req = ctx.switchToHttp().getRequest();
+    const req = ctx.switchToHttp().getRequest<{ body?: unknown }>();
     const handlerName = ctx.getHandler().name;
     console.log(`Method: ${handlerName}, Args: ${JSON.stringify(req.body)}`);
     return null;
@@ -320,7 +321,7 @@ export class UsersService {
 **উত্তর:** `@nestjs/jwt` + `@nestjs/passport` + Strategy (passport-jwt) + Guard (AuthGuard)।  
 Flow: login → token issue → protected routes এ `Authorization: Bearer <token>` → strategy validate।
 
-**উদাহরণ (JwtModule config আইডিয়া):**
+**উদাহরণ (JwtModule config আইডিয়া):** _(নোট: secret হার্ডকোড করবে না—`ConfigModule`/env থেকে নিবে)_
 
 ```ts
 import { Module } from "@nestjs/common";
@@ -331,7 +332,7 @@ import { PassportModule } from "@nestjs/passport";
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: "yourSecretKey",
+      secret: process.env.JWT_SECRET ?? "dev-only-secret",
       signOptions: { expiresIn: "60s" },
     }),
   ],
@@ -1236,6 +1237,112 @@ Nest এ দুইভাবে common:
 
 ---
 
+## Official Docs থেকে (অতিরিক্ত — ডুপ্লিকেট বাদ)
+সূত্র: [NestJS Official Documentation](https://docs.nestjs.com/)
+
+## ১২৩) Lifecycle hooks কী? কোন কোন hook আছে?
+**উত্তর:** Nest app/module/provider এর lifecycle-এর নির্দিষ্ট সময়ে code চালানোর interface।
+- **Startup**: `OnModuleInit`, `OnApplicationBootstrap`
+- **Shutdown**: `OnModuleDestroy`, `BeforeApplicationShutdown`, `OnApplicationShutdown`
+
+Use-case: DB connect, cache warmup, background worker start/stop, graceful shutdown।
+
+---
+
+## ১২৪) Graceful shutdown কেন দরকার? NestJS এ কীভাবে?
+**উত্তর:** Deploy/scale-down এ চলমান request শেষ করে cleanভাবে resource close (DB/queue) করতে।  
+সাধারণ pattern:
+- `app.enableShutdownHooks()`  
+- lifecycle hook এ connection/consumer বন্ধ করা
+
+---
+
+## ১২৫) Custom provider / injection token কী? কেন লাগে?
+**উত্তর:** `@Injectable()` class ছাড়াও token দিয়ে dependency inject করা যায়। দরকার হয়:
+- interface/abstraction inject করতে (TS interface runtime এ থাকে না)
+- multiple implementation swap করতে (mock/real)
+- constant/config value inject করতে
+
+Token হতে পারে **string/symbol/class**।
+
+---
+
+## ১২৬) `useClass`, `useValue`, `useFactory`, `useExisting` — কখন কোনটা?
+**উত্তর:**
+- **useClass**: interface-token → কোন concrete class ব্যবহার করবে
+- **useValue**: config/constant object
+- **useFactory**: dynamic/async creation (env অনুযায়ী)
+- **useExisting**: alias/redirect (এক provider কে অন্য token-এ expose)
+
+---
+
+## ১২৭) Optional dependency কীভাবে inject করো?
+**উত্তর:** dependency optional হলে `@Optional()` ব্যবহার করা যায়—না থাকলে `undefined` আসে, app crash কমে। Feature-flag/plug-in style design এ কাজে লাগে।
+
+---
+
+## ১২৮) `ValidationPipe`-এর ৩টা গুরুত্বপূর্ণ option কোনগুলো? কেন?
+**উত্তর:** security + clean input নিশ্চিত করতে:
+- **whitelist**: DTO-তে না থাকা field বাদ দেয়
+- **forbidNonWhitelisted**: extra field থাকলে error দেয় (strict)
+- **transform**: plain JSON → DTO/class (type conversion সহ)  
+Production API তে এগুলো interview-এ খুব common।
+
+---
+
+## ১২৯) `APP_FILTER`/`APP_GUARD`/`APP_INTERCEPTOR`/`APP_PIPE` কী?
+**উত্তর:** এগুলো global-level provider token—পুরো অ্যাপে default behavior enforce করে।
+- Global auth guard
+- Global validation pipe
+- Global exception filter
+- Global logging/transform interceptor  
+বড় অ্যাপে consistency রাখতে কাজে লাগে।
+
+---
+
+## ১৩০) ExecutionContext (HTTP/WS/RPC) পার্থক্যটা কীভাবে বুঝবে?
+**উত্তর:** `ExecutionContext` একই API দিলেও transport অনুযায়ী data access আলাদা:
+- HTTP: `switchToHttp().getRequest()`
+- WS: `switchToWs().getClient()` / `getData()`
+- RPC: `switchToRpc().getData()`  
+Guard/interceptor/decorator লিখতে গেলে এটা জানলে দ্রুত solve হয়।
+
+---
+
+## ১৩১) `ClassSerializerInterceptor` কখন ব্যবহার করবে?
+**উত্তর:** response object থেকে sensitive field hide/transform করতে (যেমন password/hash)।  
+`class-transformer` decorators দিয়ে output shape control করা যায়—API response clean থাকে।
+
+---
+
+## ১৩২) Testing এ `overrideProvider/overrideGuard` কেন দরকার?
+**উত্তর:** unit/integration test এ real dependency বদলে mock/stub বসাতে।
+- service/repo mock করতে **overrideProvider**
+- auth bypass করতে **overrideGuard**
+- side-effect কমাতে **overrideInterceptor**
+
+---
+
+## ১৩৩) `forRoot()` বনাম `forRootAsync()` — real-world এ কখন?
+**উত্তর:**
+- **forRoot**: static config (simple)
+- **forRootAsync**: config/env/service থেকে async config load (DB/Redis/3rd-party client)  
+Enterprise codebase এ `ConfigModule` সহ `forRootAsync` বেশি দেখা যায়।
+
+---
+
+## ১৩৪) Express vs Fastify adapter — ইন্টারভিউতে কী বলবে?
+**উত্তর:** NestJS platform-agnostic; Express default, Fastify সাধারণত faster + plugin ecosystem আলাদা।  
+Trade-off: কিছু middleware/plugin compatibility, request/response APIs (যেমন raw `@Res()`) ভিন্ন হতে পারে।
+
+---
+
+## ১৩৫) Swagger “official way” কীভাবে setup করো?
+**উত্তর:** `@nestjs/swagger` + `DocumentBuilder` দিয়ে OpenAPI doc generate; auth scheme (Bearer) যোগ করা যায়।  
+এটা API discoverability + client integration (Postman/SDK) সহজ করে।
+
+---
+
 ## References (সব সোর্স একসাথে)
 
 - [ClimbTheLadder — NestJS interview questions](https://climbtheladder.com/nestjs-interview-questions/)
@@ -1246,3 +1353,4 @@ Nest এ দুইভাবে common:
 - [WeLoveDevs — NestJS questions test](https://welovedevs.com/app/tests/questions-techno-nestjs)
 - [Vskills — NestJS interview questions](https://www.vskills.in/interview-questions/nestjs-interview-questions)
 - [LinkedIn — Jayanta Karmakar post (Advanced NestJS interview questions)](https://www.linkedin.com/posts/jayanta-karmakar-448666190_advanced-nestjs-interview-questions-for-activity-7382888709479780352-iBuf)
+- [NestJS Official Documentation](https://docs.nestjs.com/)
