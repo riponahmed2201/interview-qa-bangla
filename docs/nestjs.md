@@ -309,4 +309,251 @@ Mock: `@nestjs/testing` এর `TestingModule` এ provider override (`useValue`
 ## ৩০) GraphQL subscriptions কী? NestJS এ challenge কী?
 **উত্তর:** real-time updates (WebSocket)। Challenges: auth on WS connection, scaling (multi-instance হলে Redis PubSub), memory/connection management, filtering/throttling।
 
+---
+
+## GitHub (gasangw) থেকে (অতিরিক্ত — ডুপ্লিকেট বাদ)
+সূত্র: `https://github.com/gasangw/NestJS-Interview-Questions-And-Answers`
+
+## ৩১) NestJS কী?
+**উত্তর:** NestJS হলো **TypeScript-first** Node.js framework, যেটা scalable/maintainable server-side অ্যাপ বানাতে **modules, controllers, providers, DI** ব্যবহার করে। সাধারণত Express/Fastify এর উপর abstraction দেয়।
+
+---
+
+## ৩২) NestJS কে বানিয়েছেন কে? কেন বানিয়েছেন?
+**উত্তর:** Kamil Myśliwiec। লক্ষ্য ছিল Node.js অ্যাপে **consistent architecture/structure** আনা এবং Angular-এর মতো **DI + module pattern** সার্ভার সাইডে ব্যবহারযোগ্য করা।
+
+---
+
+## ৩৩) NestJS প্রথম রিলিজ কবে?
+**উত্তর:** ৫ অক্টোবর, ২০১৬ (প্রথম রিলিজ)।
+
+---
+
+## ৩৪) NestJS ইনস্টল করে নতুন প্রজেক্ট কীভাবে শুরু করো?
+**উত্তর:** Nest CLI ইনস্টল করে `nest new`।
+
+```bash
+npm i -g @nestjs/cli
+nest new my-app
+cd my-app
+npm run start:dev
+```
+
+Resource scaffolding:
+
+```bash
+nest g resource users
+```
+
+---
+
+## ৩৫) NestJS vs Angular পার্থক্য?
+**উত্তর:** Angular **frontend** framework (browser UI)। NestJS **backend** framework (API/server)। দুটোতেই modules/decorators/DI কনসেপ্ট আছে, কিন্তু runtime আলাদা।
+
+---
+
+## ৩৬) C++/Python/Ruby কি NestJS “সরাসরি” ব্যবহার করা যায়?
+**উত্তর:** NestJS Node runtime-এ JS/TS চালায়, তাই Python/Ruby সরাসরি না। তবে আলাদা সার্ভিস হিসেবে Python/Ruby/C++ বানিয়ে NestJS এর সাথে **HTTP/gRPC/message queue** দিয়ে কমিউনিকেট করা যায় (microservices)।
+
+---
+
+## ৩৭) NestJS অ্যাপের main components কী কী?
+**উত্তর:**  
+- **Modules**: ফিচার গ্রুপিং  
+- **Controllers**: HTTP routes/handlers  
+- **Providers/Services**: business logic, DI
+
+---
+
+## ৩৮) Controller declare কীভাবে?
+**উত্তর:** `@Controller()` দিয়ে।
+
+```ts
+import { Controller, Get } from '@nestjs/common';
+
+@Controller('example')
+export class ExampleController {
+  @Get()
+  hello() {
+    return 'Hello';
+  }
+}
+```
+
+---
+
+## ৩৯) Route parameters কীভাবে ব্যবহার করো?
+**উত্তর:** `@Param()`।
+
+```ts
+import { Controller, Get, Param } from '@nestjs/common';
+
+@Controller('cats')
+export class CatsController {
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return { id };
+  }
+}
+```
+
+---
+
+## ৪০) `@Body()` decorator এর কাজ কী?
+**উত্তর:** Request body থেকে ডাটা বের করে DTO/অবজেক্টে দেয়; সাধারণত POST/PUT/PATCH এ।
+
+---
+
+## ৪১) `@Injectable()` আর `@Inject()` পার্থক্য?
+**উত্তর:**  
+- **`@Injectable()`**: ক্লাসকে provider হিসেবে declare করে যাতে DI container manage করতে পারে।  
+- **`@Inject()`**: কোনো token/নির্দিষ্ট provider inject করতে ব্যবহার; বিশেষ করে `useValue/useFactory` বা custom token এ দরকার হয়।
+
+---
+
+## ৪২) Nest Logger বনাম `console.log()`?
+**উত্তর:** Nest Logger এ **log levels** (log/warn/error/debug/verbose) + context থাকে; production logging/filtering সহজ। `console.log()` দ্রুত ডিবাগে ঠিক, কিন্তু প্রডাকশনে Logger ভালো।
+
+---
+
+## ৪৩) DTO (Data Transfer Object) কেন ব্যবহার করো?
+**উত্তর:** ইনপুট/আউটপুট data shape define, **validation**, **type safety**, Swagger documentation জেনারেট—সব সহজ হয়।
+
+---
+
+## ৪৪) Async operations NestJS এ কীভাবে handle করো?
+**উত্তর:** `async/await` + Promise। Stream-like multiple values লাগলে RxJS Observable ব্যবহারও দেখা যায়।
+
+---
+
+## ৪৫) `@nestjs/jwt` প্যাকেজের কাজ কী?
+**উত্তর:** JWT sign/verify utilities + Nest module integration। সাধারণত `@nestjs/passport` + `passport-jwt` এর সাথে token-based auth implement করতে।
+
+---
+
+## ৪৬) Authentication বনাম Authorization (token দিয়ে) — সংক্ষেপে
+**উত্তর:**  
+- **Authentication**: ইউজার কে (login → token issue)  
+- **Authorization**: ইউজার কি পারবে (roles/permissions; Guard দিয়ে check)
+
+Token সাধারণত `Authorization: Bearer <token>` হেডারে যায়।
+
+---
+
+## ৪৭) Refresh token কেন লাগে?
+**উত্তর:** Access token ছোট সময়ের জন্য রাখলে নিরাপত্তা বাড়ে। Expire হলে refresh token দিয়ে নতুন access token আনা যায়—user বারবার login করতে হয় না। Refresh token revoke করা যায় (logout/compromise)।
+
+---
+
+## ৪৮) Swagger doc কীভাবে বানাবে?
+**উত্তর:** `@nestjs/swagger` + `SwaggerModule`।
+
+---
+
+## ৪৯) Dockerfile / Docker Compose NestJS এ কেন?
+**উত্তর:** Container এ একই environment এ রান; Compose দিয়ে app + DB/cache একসাথে multi-container হিসেবে সহজে চালানো।
+
+---
+
+## ৫০) `@nestjs/passport` কেন?
+**উত্তর:** Passport strategy (local/jwt/oauth) NestJS এর সাথে clean ভাবে integrate করে; Guard তৈরি করে route protect করা সহজ।
+
+---
+
+## ৫১) File upload কীভাবে? Multer এর role?
+**উত্তর:** Nest এ `FileInterceptor`/`FilesInterceptor` (Multer under the hood) দিয়ে multipart/form-data handle। `@UploadedFile()` দিয়ে ফাইল পাওয়া যায়।
+
+---
+
+## ৫২) NestJS এ DB integration কীভাবে? কোন কোন DB?
+**উত্তর:** Nest নিজে DB handle করে না; লাইব্রেরি ইন্টিগ্রেশন দেয়। Common:
+- **TypeORM**: MySQL/PostgreSQL/SQLite/MongoDB ইত্যাদি
+- **Mongoose**: MongoDB
+- **Sequelize**: Postgres/MySQL/MSSQL/SQLite
+- **Prisma**: multiple DB support
+
+---
+
+## ৫৩) Errors handle কীভাবে?
+**উত্তর:** built-in HTTP exceptions (`BadRequestException`, `UnauthorizedException`, `NotFoundException` ইত্যাদি) বা custom `HttpException`। Centralize করতে **Exception Filters**।
+
+---
+
+## ৫৪) CORS NestJS এ কীভাবে enable করো?
+**উত্তর:** `main.ts` এ `app.enableCors(...)` (Express/Fastify adapter অনুযায়ী)।
+
+---
+
+## ৫৫) ExecutionContext কী? কোথায় লাগে?
+**উত্তর:** বর্তমান request/handler context (HTTP/WS/RPC) অ্যাক্সেস করার abstraction। Guards/Interceptors/Decorators এ request/user/meta বের করতে কাজে লাগে।
+
+---
+
+## ৫৬) `@Res()` decorator কেন সতর্ক?
+**উত্তর:** `@Res()` ব্যবহার করলে তুমি response নিজে ম্যানুয়ালি পাঠাবে (`res.send/res.json`)—না পাঠালে request “হ্যাং” হতে পারে। সাধারণত Nest এর default return style ভালো।
+
+---
+
+## ৫৭) NestJS module types: Feature / Shared / Global / Dynamic
+**উত্তর:**  
+- **Feature**: নির্দিষ্ট ডোমেইন ফিচার  
+- **Shared**: provider export করে অন্য module-এ reuse  
+- **Global**: একবার register করলে সব জায়গায় available (`@Global`)  
+- **Dynamic**: runtime config সহ reusable (`forRoot/forRootAsync`)
+
+---
+
+## ৫৮) NestJS entry file কোনটা?
+**উত্তর:** সাধারণত `main.ts` (NestFactory দিয়ে bootstrap)।
+
+---
+
+## ৫৯) DI বনাম IoC পার্থক্য?
+**উত্তর:** **IoC** নীতি (control framework-এর হাতে), **DI** হলো IoC implement করার একটা উপায় (dependency বাইরে থেকে inject করা)।
+
+---
+
+## ৬০) NestJS caching implement (কনসেপ্ট)
+**উত্তর:** `CacheModule.register()` + `CACHE_MANAGER` inject করে `get/set/del` করা বা `CacheInterceptor`।
+
+---
+
+## ৬১) DIP (Dependency Inversion Principle) NestJS এ কেন গুরুত্বপূর্ণ?
+**উত্তর:** high-level code যেন low-level implementation এ depend না করে; abstraction/interface/token এ depend করে। DI + custom providers দিয়ে সহজে swap/mocking করা যায়।
+
+---
+
+## ৬২) Task scheduling NestJS এ কীভাবে?
+**উত্তর:** `@nestjs/schedule` + `@Cron()`/`@Interval()`।
+
+---
+
+## ৬৩) DB transaction কেন দরকার? NestJS এ কীভাবে?
+**উত্তর:** একাধিক DB অপারেশন “সব হবে নাহলে কিছুই হবে না” নিশ্চিত করতে transaction (financial/order/payment ইত্যাদিতে)। TypeORM/Prisma transaction API দিয়ে করা হয়।
+
+---
+
+## ৬৪) API versioning NestJS এ কীভাবে?
+**উত্তর:** `app.enableVersioning(...)` দিয়ে (URI/header/media-type/custom)।
+
+---
+
+## ৬৫) GraphQL Resolver/Scalar decorators কী?
+**উত্তর:** `@Resolver()` দিয়ে resolver ক্লাস, `@Scalar()` দিয়ে custom scalar (যেমন Date) define। GraphQL schema-driven API বানাতে লাগে।
+
+---
+
+## ৬৬) Serialization/Deserialization NestJS এ কোথায় আসে?
+**উত্তর:** request JSON → object (deserialize), response object → JSON (serialize)। Nest এ `ClassSerializerInterceptor`/pipes দিয়ে transform/shape control করা যায়।
+
+---
+
+## ৬৭) Tight vs Loose coupling — NestJS module কিভাবে loose করে?
+**উত্তর:** DI + module boundary + provider abstraction দিয়ে এক module-এর পরিবর্তন অন্যটাকে কম impact করে—maintainable হয়।
+
+---
+
+## ৬৮) SSE (Server-Sent Events) NestJS এ কী?
+**উত্তর:** server → client one-way real-time stream। `@Sse()` decorator দিয়ে route বানানো যায়। Use-case: live feed/notifications (bi-directional দরকার হলে WebSocket)।
+
 
