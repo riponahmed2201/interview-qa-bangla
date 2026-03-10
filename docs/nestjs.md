@@ -1247,6 +1247,29 @@ Nest এ দুইভাবে common:
 
 Use-case: DB connect, cache warmup, background worker start/stop, graceful shutdown।
 
+**উদাহরণ (hook ব্যবহার):**
+
+```ts
+import {
+  Injectable,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
+
+@Injectable()
+export class AppLifecycleService implements OnModuleInit, OnApplicationShutdown {
+  async onModuleInit() {
+    // init resources (db connect, warm cache, etc.)
+    console.log('Module initialized');
+  }
+
+  async onApplicationShutdown(signal?: string) {
+    // cleanup resources (close db, stop consumers, etc.)
+    console.log('Shutting down', signal);
+  }
+}
+```
+
 ---
 
 ## ১২৪) Graceful shutdown কেন দরকার? NestJS এ কীভাবে?
@@ -1254,6 +1277,20 @@ Use-case: DB connect, cache warmup, background worker start/stop, graceful shutd
 সাধারণ pattern:
 - `app.enableShutdownHooks()`  
 - lifecycle hook এ connection/consumer বন্ধ করা
+
+**উদাহরণ (`main.ts` + shutdown hooks):**
+
+```ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
+  await app.listen(3000);
+}
+bootstrap();
+```
 
 ---
 
@@ -1265,6 +1302,40 @@ Use-case: DB connect, cache warmup, background worker start/stop, graceful shutd
 
 Token হতে পারে **string/symbol/class**।
 
+**উদাহরণ (token দিয়ে inject):**
+
+```ts
+import { Inject, Injectable, Module } from '@nestjs/common';
+
+export const PAYMENT_GATEWAY = Symbol('PAYMENT_GATEWAY');
+
+export interface PaymentGateway {
+  charge(amount: number): Promise<boolean>;
+}
+
+class StripeGateway implements PaymentGateway {
+  async charge(amount: number) {
+    return amount > 0;
+  }
+}
+
+@Injectable()
+class PaymentsService {
+  constructor(@Inject(PAYMENT_GATEWAY) private readonly gateway: PaymentGateway) {}
+  pay(amount: number) {
+    return this.gateway.charge(amount);
+  }
+}
+
+@Module({
+  providers: [
+    PaymentsService,
+    { provide: PAYMENT_GATEWAY, useClass: StripeGateway },
+  ],
+})
+export class PaymentsModule {}
+```
+
 ---
 
 ## ১২৬) `useClass`, `useValue`, `useFactory`, `useExisting` — কখন কোনটা?
@@ -1274,10 +1345,63 @@ Token হতে পারে **string/symbol/class**।
 - **useFactory**: dynamic/async creation (env অনুযায়ী)
 - **useExisting**: alias/redirect (এক provider কে অন্য token-এ expose)
 
+**উদাহরণ (৪ ধরনের provider একসাথে):**
+
+```ts
+import { Module } from '@nestjs/common';
+
+const CONFIG = 'CONFIG';
+const LOGGER = 'LOGGER';
+const FAST_LOGGER = 'FAST_LOGGER';
+
+class AppLogger {
+  log(msg: string) {
+    console.log(msg);
+  }
+}
+
+@Module({
+  providers: [
+    // useValue
+    { provide: CONFIG, useValue: { env: 'dev' } },
+
+    // useClass
+    { provide: LOGGER, useClass: AppLogger },
+
+    // useFactory (could be async)
+    {
+      provide: 'NOW',
+      useFactory: () => new Date().toISOString(),
+    },
+
+    // useExisting (alias)
+    { provide: FAST_LOGGER, useExisting: LOGGER },
+  ],
+  exports: [CONFIG, LOGGER, FAST_LOGGER, 'NOW'],
+})
+export class CoreModule {}
+```
+
 ---
 
 ## ১২৭) Optional dependency কীভাবে inject করো?
 **উত্তর:** dependency optional হলে `@Optional()` ব্যবহার করা যায়—না থাকলে `undefined` আসে, app crash কমে। Feature-flag/plug-in style design এ কাজে লাগে।
+
+**উদাহরণ (`@Optional()`):**
+
+```ts
+import { Inject, Injectable, Optional } from '@nestjs/common';
+
+const FEATURE_FLAG = 'FEATURE_FLAG';
+
+@Injectable()
+export class FeatureService {
+  constructor(@Optional() @Inject(FEATURE_FLAG) private readonly flag?: boolean) {}
+  isEnabled() {
+    return this.flag ?? false;
+  }
+}
+```
 
 ---
 
@@ -1287,6 +1411,27 @@ Token হতে পারে **string/symbol/class**।
 - **forbidNonWhitelisted**: extra field থাকলে error দেয় (strict)
 - **transform**: plain JSON → DTO/class (type conversion সহ)  
 Production API তে এগুলো interview-এ খুব common।
+
+**উদাহরণ (global ValidationPipe):**
+
+```ts
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  await app.listen(3000);
+}
+bootstrap();
+```
 
 ---
 
@@ -1298,6 +1443,23 @@ Production API তে এগুলো interview-এ খুব common।
 - Global logging/transform interceptor  
 বড় অ্যাপে consistency রাখতে কাজে লাগে।
 
+**উদাহরণ (APP_GUARD global):**
+
+```ts
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+
+@Module({
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard, // আপনার guard class
+    },
+  ],
+})
+export class AppModule {}
+```
+
 ---
 
 ## ১৩০) ExecutionContext (HTTP/WS/RPC) পার্থক্যটা কীভাবে বুঝবে?
@@ -1307,11 +1469,61 @@ Production API তে এগুলো interview-এ খুব common।
 - RPC: `switchToRpc().getData()`  
 Guard/interceptor/decorator লিখতে গেলে এটা জানলে দ্রুত solve হয়।
 
+**উদাহরণ (Guard এ HTTP vs WS আলাদা করা):**
+
+```ts
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AnyTransportGuard implements CanActivate {
+  canActivate(ctx: ExecutionContext) {
+    const type = ctx.getType<'http' | 'ws' | 'rpc'>();
+
+    if (type === 'http') {
+      const req = ctx.switchToHttp().getRequest();
+      return Boolean(req.headers?.authorization);
+    }
+
+    if (type === 'ws') {
+      const client = ctx.switchToWs().getClient();
+      return Boolean(client?.handshake?.auth?.token);
+    }
+
+    const data = ctx.switchToRpc().getData();
+    return Boolean(data);
+  }
+}
+```
+
 ---
 
 ## ১৩১) `ClassSerializerInterceptor` কখন ব্যবহার করবে?
 **উত্তর:** response object থেকে sensitive field hide/transform করতে (যেমন password/hash)।  
 `class-transformer` decorators দিয়ে output shape control করা যায়—API response clean থাকে।
+
+**উদাহরণ (`@Exclude()` + ClassSerializerInterceptor):**
+
+```ts
+import { Exclude } from 'class-transformer';
+import { ClassSerializerInterceptor, Controller, Get, UseInterceptors } from '@nestjs/common';
+
+class UserEntity {
+  id: number;
+  email: string;
+
+  @Exclude()
+  passwordHash: string;
+}
+
+@Controller('users')
+@UseInterceptors(ClassSerializerInterceptor)
+export class UsersController {
+  @Get('me')
+  me(): UserEntity {
+    return { id: 1, email: 'a@b.com', passwordHash: 'secret' };
+  }
+}
+```
 
 ---
 
@@ -1321,6 +1533,26 @@ Guard/interceptor/decorator লিখতে গেলে এটা জানল�
 - auth bypass করতে **overrideGuard**
 - side-effect কমাতে **overrideInterceptor**
 
+**উদাহরণ (overrideProvider):**
+
+```ts
+import { Test } from '@nestjs/testing';
+
+describe('UsersService', () => {
+  it('mocks repository', async () => {
+    const moduleRef = await Test.createTestingModule({
+      providers: [UsersService, UsersRepository],
+    })
+      .overrideProvider(UsersRepository)
+      .useValue({ findAll: jest.fn().mockResolvedValue([]) })
+      .compile();
+
+    const service = moduleRef.get(UsersService);
+    await expect(service.findAll()).resolves.toEqual([]);
+  });
+});
+```
+
 ---
 
 ## ১৩৩) `forRoot()` বনাম `forRootAsync()` — real-world এ কখন?
@@ -1328,6 +1560,34 @@ Guard/interceptor/decorator লিখতে গেলে এটা জানল�
 - **forRoot**: static config (simple)
 - **forRootAsync**: config/env/service থেকে async config load (DB/Redis/3rd-party client)  
 Enterprise codebase এ `ConfigModule` সহ `forRootAsync` বেশি দেখা যায়।
+
+**উদাহরণ (`forRootAsync` pattern):**
+
+```ts
+import { DynamicModule, Module } from '@nestjs/common';
+
+type ClientOptions = { url: string };
+
+@Module({})
+export class ClientModule {
+  static forRootAsync(options: {
+    useFactory: (...args: any[]) => Promise<ClientOptions> | ClientOptions;
+    inject?: any[];
+  }): DynamicModule {
+    return {
+      module: ClientModule,
+      providers: [
+        {
+          provide: 'CLIENT_OPTIONS',
+          useFactory: options.useFactory,
+          inject: options.inject ?? [],
+        },
+      ],
+      exports: ['CLIENT_OPTIONS'],
+    };
+  }
+}
+```
 
 ---
 
@@ -1340,6 +1600,31 @@ Trade-off: কিছু middleware/plugin compatibility, request/response APIs (
 ## ১৩৫) Swagger “official way” কীভাবে setup করো?
 **উত্তর:** `@nestjs/swagger` + `DocumentBuilder` দিয়ে OpenAPI doc generate; auth scheme (Bearer) যোগ করা যায়।  
 এটা API discoverability + client integration (Postman/SDK) সহজ করে।
+
+**উদাহরণ (`main.ts` Swagger setup):**
+
+```ts
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('My API')
+    .setDescription('Interview QA demo')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
+
+  await app.listen(3000);
+}
+bootstrap();
+```
 
 ---
 
