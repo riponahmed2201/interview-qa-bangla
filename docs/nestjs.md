@@ -111,6 +111,19 @@ export class LoggerMiddleware implements NestMiddleware {
 
 *(নোট: production-এ সাধারণত Interceptor/Logger ব্যবহার করা হয়।)*
 
+**উদাহরণ (param decorator):**
+
+```ts
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+
+export const LogMethod = createParamDecorator((_: unknown, ctx: ExecutionContext) => {
+  const req = ctx.switchToHttp().getRequest();
+  const handlerName = ctx.getHandler().name;
+  console.log(`Method: ${handlerName}, Args: ${JSON.stringify(req.body)}`);
+  return null;
+});
+```
+
 ---
 
 ## ৭) Incoming request validate কীভাবে করো? (class-validator)
@@ -154,16 +167,66 @@ export class AuthGuard implements CanActivate {
 **উত্তর:** Service এ HTTP client ব্যবহার করে data fetch, controller এ constructor injection।  
 আজকাল Nest এ `HttpModule`/`HttpService` (Axios) বা native `fetch`—দুটোই দেখা যায়।
 
+**উদাহরণ (HttpModule/HttpService আইডিয়া):**
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { map } from 'rxjs/operators';
+
+@Injectable()
+export class ApiService {
+  constructor(private readonly http: HttpService) {}
+
+  fetchData() {
+    return this.http.get('https://api.example.com/data').pipe(map((r) => r.data));
+  }
+}
+```
+
 ---
 
 ## ১০) Caching implement কীভাবে করো?
 **উত্তর:** `CacheModule` + (ক) method-level caching বা (খ) `CacheInterceptor` দিয়ে response cache।
+
+**উদাহরণ (CacheModule + CacheInterceptor):**
+
+```ts
+import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
+import { Module, UseInterceptors, Controller, Get } from '@nestjs/common';
+
+@Controller()
+@UseInterceptors(CacheInterceptor)
+class AppController {
+  @Get()
+  getHello() {
+    return 'Hello World!';
+  }
+}
+
+@Module({ imports: [CacheModule.register({ ttl: 5, max: 10 })], controllers: [AppController] })
+export class AppModule {}
+```
 
 ---
 
 ## ১১) Interceptors কী? একটা use-case বলো
 **উত্তর:** controller method চলার **আগে/পরে** লজিক—logging, response transform, timing, caching, exception mapping।  
 `NestInterceptor` implement করে `@UseInterceptors()`।
+
+**উদাহরণ (response wrap/transform):**
+
+```ts
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { map } from 'rxjs/operators';
+
+@Injectable()
+export class TransformInterceptor implements NestInterceptor {
+  intercept(_: ExecutionContext, next: CallHandler) {
+    return next.handle().pipe(map((data) => ({ data })));
+  }
+}
+```
 
 ---
 
@@ -188,16 +251,64 @@ export class ParseIntPipe implements PipeTransform<string, number> {
 ## ১৩) Database interaction: TypeORM দিয়ে কীভাবে?
 **উত্তর:** `TypeOrmModule.forRoot()` দিয়ে কানেক্ট, entity define, `@InjectRepository()` দিয়ে repository injection করে CRUD।
 
+**উদাহরণ (TypeORM module + repository injection):**
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './user.entity';
+
+@Injectable()
+export class UsersService {
+  constructor(@InjectRepository(User) private readonly usersRepo: Repository<User>) {}
+  findAll() {
+    return this.usersRepo.find();
+  }
+}
+```
+
 ---
 
 ## ১৪) JWT Auth কীভাবে implement করো?
 **উত্তর:** `@nestjs/jwt` + `@nestjs/passport` + Strategy (passport-jwt) + Guard (AuthGuard)।  
 Flow: login → token issue → protected routes এ `Authorization: Bearer <token>` → strategy validate।
 
+**উদাহরণ (JwtModule config আইডিয়া):**
+
+```ts
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+
+@Module({
+  imports: [
+    PassportModule,
+    JwtModule.register({ secret: 'yourSecretKey', signOptions: { expiresIn: '60s' } }),
+  ],
+})
+export class AuthModule {}
+```
+
 ---
 
 ## ১৫) Custom exception filter তৈরি ও ব্যবহার
 **উত্তর:** `ExceptionFilter` implement করে exception ধরো এবং unified error JSON response দাও। Global করতে `app.useGlobalFilters()` বা provider হিসেবে `APP_FILTER`।
+
+**উদাহরণ (global filter):**
+
+```ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { HttpErrorFilter } from './http-error.filter';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalFilters(new HttpErrorFilter());
+  await app.listen(3000);
+}
+bootstrap();
+```
 
 ---
 
